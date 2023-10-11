@@ -10,7 +10,7 @@
 
 -include_lib("wx/include/wx.hrl").
 
--record(state, {wx_env, dim, check_boxes}).
+-record(state, {wx_env, dim, check_boxes, timer}).
 
 -define(ID_TICK, 1).
 -define(ID_PLAY, 2).
@@ -41,6 +41,7 @@ init([Dim]) ->
     wxSizer:add(ToolsSizer, PlayButton, [{proportion, 1}, {flag, ?wxEXPAND}]),
 
     wxEvtHandler:connect(TickButton, command_button_clicked),
+    wxEvtHandler:connect(PlayButton, command_button_clicked),
 
     CheckBoxesWithCoords = lists:foldl(fun(X, Acc) ->
                                                RowSizer = wxBoxSizer:new(?wxHORIZONTAL),
@@ -68,7 +69,7 @@ init([Dim]) ->
 
     gen_server:cast(self, tick),
 
-    {ok, #state{wx_env = WxEnv, dim = Dim, check_boxes = maps:from_list(CheckBoxesWithCoords)}}.
+    {ok, #state{wx_env = WxEnv, dim = Dim, check_boxes = maps:from_list(CheckBoxesWithCoords), timer = undefined}}.
 
 handle_cast(tick, State) ->
     tick(State);
@@ -78,7 +79,26 @@ handle_cast(_Req, State) ->
 handle_call(_Req, _From, State) ->
     {noreply, State}.
 
-handle_info(#wx{event = #wxCommand{type = command_button_clicked}}, State) ->
+handle_info(#wx{id = ?ID_TICK, event = #wxCommand{type = command_button_clicked}}, State) ->
+    tick(State);
+handle_info(#wx{id = ?ID_PLAY,
+                obj = Button,
+                event = #wxCommand{type = command_button_clicked}},
+            #state{timer = TimerRef} = State) ->
+    What = wxButton:getLabel(Button),
+    io:format("What: ~p~n", [What]),
+    NewTimerRef = case wxButton:getLabel(Button) of
+                      "Play" ->
+                          wxButton:setLabel(Button, "Stop"),
+                          erlang:send_after(1000, self(), timer_expired);
+                      "Stop" ->
+                          wxButton:setLabel(Button, "Play"),
+                          erlang:cancel_timer(TimerRef),
+                          undefined
+                  end,
+    {noreply, State#state{timer = NewTimerRef}};
+handle_info(timer_expired, State) ->
+    erlang:send_after(1000, self(), timer_expired),
     tick(State);
 handle_info(#wx{event = #wxClose{}}, State) ->
     {stop, normal, State};
