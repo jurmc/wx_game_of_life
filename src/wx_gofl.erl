@@ -35,8 +35,8 @@ init([Dim]) ->
     MainSizer = wxBoxSizer:new(?wxVERTICAL),
     ToolsSizer = wxBoxSizer:new(?wxHORIZONTAL),
     wxSizer:add(MainSizer, ToolsSizer, [{proportion, 1}, {flag, ?wxEXPAND}]),
-    TickButton = wxButton:new(Frame, ?ID_TICK, [{label, "Tick"}]),
-    PlayButton = wxButton:new(Frame, ?ID_PLAY, [{label, "Play"}]),
+    TickButton = wxButton:new(Panel, ?ID_TICK, [{label, "Tick"}]),
+    PlayButton = wxButton:new(Panel, ?ID_PLAY, [{label, "Play"}]),
     wxSizer:add(ToolsSizer, TickButton, [{proportion, 1}, {flag, ?wxEXPAND}]),
     wxSizer:add(ToolsSizer, PlayButton, [{proportion, 1}, {flag, ?wxEXPAND}]),
 
@@ -46,7 +46,7 @@ init([Dim]) ->
     CheckBoxesWithCoords = lists:foldl(fun(X, Acc) ->
                                                RowSizer = wxBoxSizer:new(?wxHORIZONTAL),
                                                wxSizer:add(MainSizer, RowSizer, [{proportion, 1}, {flag, ?wxEXPAND}]),
-                                               NewCheckBoxes = [{{X,Y}, wxCheckBox:new(Frame, ?wxID_ANY, "")} || Y <- lists:seq(1,Dim)],
+                                               NewCheckBoxes = [{{X,Y}, wxCheckBox:new(Frame, ?wxID_ANY, "", [])} || Y <- lists:seq(1,Dim)],
                                                lists:map(fun({{_,_}, ChBox}) ->
                                                                  Checked = case rand:uniform(2) of
                                                                                1 -> true;
